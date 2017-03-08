@@ -149,24 +149,24 @@ namespace GridWorldDemo
             var sb = new StringBuilder();
 
             sb.AppendLine(" --- --- --- --- ");
-            for (var i = 0; i < GridSize; i++)
+            for (var y = 0; y < GridSize; y++)
             {
-                for (var j = 0; j < GridSize; j++)
+                for (var x = 0;x < GridSize; x++)
                 {
                     sb.Append(" ");
-                    if (PlayerLocation.X == i && PlayerLocation.Y == j)
+                    if (PlayerLocation.X == x && PlayerLocation.Y == y)
                     {
                         sb.Append(" O ");
                     }
-                    else if (WorldState[i,j,WallLayer] == 1)
+                    else if (WorldState[x, y, WallLayer] == 1)
                     {
                         sb.Append("---");
                     }
-                    else if (WorldState[i, j, PitLayer] == 1)
+                    else if (WorldState[x, y, PitLayer] == 1)
                     {
                         sb.Append(" ! ");
                     }
-                    else if (WorldState[i, j, GoalLayer] == 1)
+                    else if (WorldState[x, y, GoalLayer] == 1)
                     {
                         sb.Append(" $ ");
                     }

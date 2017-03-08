@@ -3,6 +3,7 @@ using ConvNetSharp;
 using ConvNetSharp.Layers;
 using ConvNetSharp.Training;
 using System.Text;
+using System.Collections.Generic;
 
 /// <summary>
 /// Based on: http://outlace.com/Reinforcement-Learning-Part-3/
@@ -25,14 +26,14 @@ namespace GridWorldDemo
             // network
             Net = new Net();
             Net.AddLayer(new InputLayer(1, 1, numInputs));
-            Net.AddLayer(new FullyConnLayer(164));
+            Net.AddLayer(new FullyConnLayer(numInputs*2));
             Net.AddLayer(new ReluLayer());
-            Net.AddLayer(new FullyConnLayer(150));
+            Net.AddLayer(new FullyConnLayer(numInputs));
             Net.AddLayer(new ReluLayer());
             Net.AddLayer(new FullyConnLayer(numActions));
             Net.AddLayer(new RegressionLayer());
 
-            Trainer = new SgdTrainer(Net) { LearningRate = 0.001, Momentum = 0.0, BatchSize = 64, L2Decay = 0.01 };
+            Trainer = new SgdTrainer(Net) { LearningRate = 0.01, Momentum = 0.0, BatchSize = 1, L2Decay = 0.001 };
 
             World = GridWorld.StandardState();
         }
@@ -75,23 +76,24 @@ namespace GridWorldDemo
             {
                 sb.Append($"{r} ");
             }
+            sb.Remove(sb.Length - 1, 1);
             sb.Append(")");
 
             return sb.ToString();
         }
 
-        public void Train()
+        public void Train(int iterations)
         {
             var avLoss = 0.0;
             var lastLoss = 0.0;
-            var epochs = 1000;
             var gamma = 0.9f;
             var epsilon = 1f;
             var gameMoves = 0;
             var totalMoves = 0;
             var totalGames = 0;
+            var startTime = DateTime.Now;
 
-            for (var i = 0; i < epochs; i++)
+            for (var i = 0; i < iterations; i++)
             {
                 World = GridWorld.StandardState();
 
@@ -128,6 +130,7 @@ namespace GridWorldDemo
 
                     //# Get max_Q(S',a)
                     var newQ = Net.Forward(newState);
+                    var y = GetValues(newQ);
                     var maxQ = MaxValue(newQ);
 
                     if (reward == -1)
@@ -144,16 +147,33 @@ namespace GridWorldDemo
                         Console.WriteLine($"Game: {totalGames}. Moves: {gameMoves}. {(reward == 10 ? "WIN!" : "")}");
                     }
 
-                    //# Feedback the score of the new state
-                    Trainer.Train(newState, updatedReward);
+                    //# Target output
+                    y[action] = updatedReward;
+
+                    //# Feedback what the score would be for this action
+                    Trainer.Train(state, y);
                     avLoss += Trainer.Loss;
                 }
 
-                if (epsilon > 0.1f) epsilon -= (1f / epochs);
+                //# Slowly reduce the chance of choosing a random action
+                if (epsilon > 0.05f) epsilon -= (1f / iterations);
             }
             lastLoss = Trainer.Loss;
-            avLoss /= totalMoves * epochs;
-            Console.WriteLine($"Avg. Loss: {avLoss}. Last: {lastLoss}");
+            avLoss /= totalMoves;
+            Console.WriteLine($"Avg loss: {avLoss}. Last: {lastLoss}");
+            Console.WriteLine($"Training duration: {DateTime.Now - startTime}");
+        }
+
+        private double[] GetValues(IVolume qVal)
+        {
+            var l = new List<double>();
+
+            foreach (var r in qVal)
+            {
+                l.Add(r);
+            }
+
+            return l.ToArray();
         }
 
         private int MaxValueIndex(IVolume qVal)
@@ -164,12 +184,12 @@ namespace GridWorldDemo
             var i = 0;
             foreach (var r in qVal)
             {
-                i++;
                 if (r > max)
                 {
                     max = r;
                     maxI = i;
                 }
+                i++;
             }
 
             return maxI;

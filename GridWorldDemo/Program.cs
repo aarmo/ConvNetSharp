@@ -9,22 +9,29 @@ namespace GridWorldDemo
         {
             var numInputs = GridWorld.GridSize * GridWorld.GridSize * GridWorld.GridDepth;
             var numActions = 4;
-
             var brain = new Brain(numInputs, numActions);
 
-            Console.WriteLine(brain.World.DisplayGrid());
+            // Initial output:
+            var initialOutput = brain.DisplayOutput(brain.GetInputs());
 
-            // Initial Output:
-            var input1 = brain.GetInputs();
-            Console.WriteLine(brain.DisplayOutput(input1));
+            Console.WriteLine("Training...");
+            brain.Train(2000);
 
-            brain.Train();
-
-            // Trained Output:
+            // Trained output:
             brain.World = GridWorld.StandardState();
-            var input2 = brain.GetInputs();
-            Console.WriteLine(brain.DisplayOutput(input2));
-            
+            var trainedOutput = brain.DisplayOutput(brain.GetInputs());
+
+            // Show results:
+            Console.WriteLine(brain.World.DisplayGrid());
+            Console.WriteLine("Actions=(UP, DOWN, LEFT, RIGHT)");
+            Console.WriteLine($"Initial output: {initialOutput}");
+            Console.WriteLine($"Trained output: {trainedOutput}");
+
+            Console.ReadLine();
+
+            // Play a game:
+
+
             Console.ReadLine();
         }
     }
