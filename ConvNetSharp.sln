@@ -19,7 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConvNetSharp.Tests", "src\C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FluentMnistDemo", "Examples\FluentMnistDemo\FluentMnistDemo.csproj", "{85C8D7B0-8377-4086-B4FC-D6D3AACD8DDD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GridWorldDemo", "GridWorldDemo\GridWorldDemo.csproj", "{7711CA26-01EE-41EC-A1E9-C5278CA64551}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GridWorldDemo", "Examples\GridWorldDemo\GridWorldDemo.csproj", "{7711CA26-01EE-41EC-A1E9-C5278CA64551}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

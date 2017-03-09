@@ -33,7 +33,7 @@ namespace ConvNetSharp.Tests
             Assert.AreEqual(net.Layers.Count, deserialized.Layers.Count);
             Assert.IsTrue(net.Layers[0] is InputLayer);
 
-            var deserializedConv = net.Layers[1] as ConvLayer;
+            var deserializedConv = deserialized.Layers[1] as ConvLayer;
             Assert.NotNull(deserializedConv);
             Assert.NotNull(deserializedConv.Filters);
             Assert.AreEqual(16, deserializedConv.Filters.Count);
@@ -46,7 +46,7 @@ namespace ConvNetSharp.Tests
                 }
             }
 
-            var deserializedPool = net.Layers[2] as PoolLayer;
+            var deserializedPool = deserialized.Layers[2] as PoolLayer;
             Assert.NotNull(deserializedPool);
             Assert.AreEqual(2, deserializedPool.Height);
             Assert.AreEqual(2, deserializedPool.Width);
@@ -55,7 +55,7 @@ namespace ConvNetSharp.Tests
             Assert.AreEqual(0, deserializedPool.Pad);
             Assert.AreEqual(2, deserializedPool.Stride);
 
-            var deserializedFullyCon = net.Layers[3] as FullyConnLayer;
+            var deserializedFullyCon = deserialized.Layers[3] as FullyConnLayer;
             Assert.NotNull(deserializedFullyCon);
             Assert.NotNull(deserializedFullyCon.Filters);
             Assert.AreEqual(3, deserializedFullyCon.Filters.Count);
@@ -68,8 +68,8 @@ namespace ConvNetSharp.Tests
                 }
             }
 
-            Assert.IsTrue(net.Layers[4] is SoftmaxLayer);
-            Assert.AreEqual(3, ((SoftmaxLayer)net.Layers[4]).ClassCount);
+            Assert.IsTrue(deserialized.Layers[4] is SoftmaxLayer);
+            Assert.AreEqual(3, ((SoftmaxLayer)deserialized.Layers[4]).ClassCount);
         }
 
         [Test]
@@ -148,9 +148,34 @@ namespace ConvNetSharp.Tests
                     }
                 }
 
-                Assert.IsTrue(net.Layers[3] is SoftmaxLayer);
-                Assert.AreEqual(3, ((SoftmaxLayer)net.Layers[3]).ClassCount);
+                Assert.IsTrue(deserialized.Layers[3] is SoftmaxLayer);
+                Assert.AreEqual(3, ((SoftmaxLayer)deserialized.Layers[3]).ClassCount);
             }
+        }
+
+        [Test]
+        public void JsonAnotherNetSerilizerTest()
+        {
+            var numInputs = 64;
+            var numActions = 5;
+            var net = new Net();
+            net.AddLayer(new InputLayer(1, 1, numInputs));
+            net.AddLayer(new FullyConnLayer((int)(numInputs * 2.5)));
+            net.AddLayer(new ReluLayer());
+            net.AddLayer(new FullyConnLayer((int)(numInputs * 1.5)));
+            net.AddLayer(new ReluLayer());
+            net.AddLayer(new FullyConnLayer(numActions));
+            net.AddLayer(new RegressionLayer());
+
+            // Serialize to json
+            var json = net.ToJSON();
+
+            // Deserialize from json
+            var deserialized = SerializationExtensions.FromJSON(json);
+
+            var input = new Volume(1, 1, numInputs);            
+            var output1 = net.Forward(input);
+            var output2 = deserialized.Forward(input);
         }
     }
 }

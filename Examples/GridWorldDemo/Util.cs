@@ -1,8 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 
 namespace GridWorldDemo
 {
-    public class Util
+    public static class Util
     {
         public static Random Rnd = new Random();
 

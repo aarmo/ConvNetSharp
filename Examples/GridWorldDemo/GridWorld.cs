@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text;
+﻿using System.Text;
 
 namespace GridWorldDemo
 {
@@ -144,6 +143,12 @@ namespace GridWorldDemo
             return -1;
         }
 
+        public bool GameOver()
+        {
+            var reward = GetReward();
+            return reward != -1;
+        }
+
         public string DisplayGrid()
         {
             var sb = new StringBuilder();
@@ -182,5 +187,4 @@ namespace GridWorldDemo
             return sb.ToString();
         }
     }
-
 }
