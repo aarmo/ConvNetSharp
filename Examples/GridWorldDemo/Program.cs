@@ -7,7 +7,7 @@ namespace GridWorldDemo
 {
     class Program
     {
-        private const string BrainFile = @".\GridWorld.brain";
+        private const string BrainFile = @".\Data\GridWorld.brain";
         private static string[] _actionNames = { "UP", "DOWN", "LEFT", "RIGHT" };
 
         static void Main(string[] args)
@@ -37,10 +37,10 @@ namespace GridWorldDemo
             var initialOutput = brain.DisplayOutput(brain.GetInputs());
 
             //Console.WriteLine("Training...");
-            //brain.Train(100, 1f);
+            //brain.Train(500, 1f);
 
             Console.WriteLine("Batch Training...");
-            brain.TrainWithExperienceReplay(2900, 40, 0.5f);
+            brain.TrainWithExperienceReplay(500, 40, 1f);
 
             // Sample output:
             brain.World = GridWorld.RandomPlayerState();
