@@ -29,7 +29,9 @@ namespace GridWorldDemo
         public Net Net;
         
         private SgdTrainer _trainer;
-        
+
+        public object Utils { get; private set; }
+
         public Brain(int numInputs, int numActions)
         {
             CreatedDate = DateTime.Now;
@@ -39,11 +41,10 @@ namespace GridWorldDemo
             NumActions = numActions;
 
             // network
+            var layer1N = (numInputs + numActions)/2;
             Net = new Net();
             Net.AddLayer(new InputLayer(1, 1, numInputs));
-            Net.AddLayer(new FullyConnLayer((int)(numInputs*2.5)));
-            Net.AddLayer(new ReluLayer());
-            Net.AddLayer(new FullyConnLayer((int)(numInputs*1.5)));
+            Net.AddLayer(new FullyConnLayer(layer1N));
             Net.AddLayer(new ReluLayer());
             Net.AddLayer(new FullyConnLayer(numActions));
             Net.AddLayer(new RegressionLayer());
@@ -184,7 +185,7 @@ namespace GridWorldDemo
             Console.WriteLine($"Training duration: {duration}. Total: {TrainingTime}");
         }
 
-        public void TrainWithExperienceReplay(int numGames, int batchSize, float initialRandomChance)
+        public void TrainWithExperienceReplay(int numGames, int batchSize, float initialRandomChance, bool degradeRandomChance = true, string saveToFile = null)
         {
             var gamma = 0.975f;
             var buffer = batchSize * 2;
@@ -194,12 +195,14 @@ namespace GridWorldDemo
             var replay = new List<object[]>();
 
             _trainer = new SgdTrainer(Net) { LearningRate = 0.01, Momentum = 0.0, BatchSize = batchSize, L2Decay = 0.001 };
+
             var startTime = DateTime.Now;
             var batches = 0;
 
             for (var i = 0; i < numGames; i++)
             {
                 World = GridWorld.RandomPlayerState();
+                var gameMoves = 0;
 
                 double updatedReward;
                 var gameRunning = true;
@@ -224,10 +227,11 @@ namespace GridWorldDemo
 
                     //# Take action, observe new state S'
                     World.MovePlayer(action);
+                    gameMoves++;
                     TotalTrainingMoves++;
                     var newState = GetInputs();
-
-                    //# Observe reward
+                    
+                    //# Observe reward, limit turns
                     var reward = World.GetReward();
                     gameRunning = !World.GameOver();
 
@@ -258,7 +262,7 @@ namespace GridWorldDemo
                             var y = GetValues(newQ);
                             var maxQ = MaxValue(newQ);
 
-                            if (oldReward == -1)
+                            if (oldReward == GridWorld.ProgressScore)
                             {
                                 //# Non-terminal state
                                 updatedReward = (oldReward + (gamma * maxQ));
@@ -283,17 +287,23 @@ namespace GridWorldDemo
                         TotalLoss += _trainer.Loss;
                     }
                 }
-                Console.WriteLine();
+                Console.WriteLine($"{(World.GetReward() == GridWorld.WinScore ? " WON!" : string.Empty)}");
                 Console.Write($"Game: {i + 1}");
                 TotalTrainingGames++;
 
-                //# Slowly reduce the chance of choosing a random action
-                if (initialRandomChance > 0.05f) initialRandomChance -= (1f / numGames);
+                // Save every 10 games...
+                if (!string.IsNullOrEmpty(saveToFile) && (i % 10 == 0))
+                    Util.SaveBrainToFile(this, saveToFile);
+
+                //# Optinoally: slowly reduce the chance of choosing a random action
+                if (degradeRandomChance && initialRandomChance > 0.05f) initialRandomChance -= (1f / numGames);
             }
             var duration = (DateTime.Now - startTime);
 
             LastLoss = _trainer.Loss;
             TrainingTime += duration;
+
+            if (!string.IsNullOrEmpty(saveToFile)) Util.SaveBrainToFile(this, saveToFile);
 
             Console.WriteLine($"\nAvg loss: {TotalLoss / TotalTrainingMoves}. Last: {LastLoss}");
             Console.WriteLine($"Training duration: {duration}. Total: {TrainingTime}");

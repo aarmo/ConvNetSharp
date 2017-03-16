@@ -14,6 +14,7 @@ namespace GridWorldDemo
 
         public int[,,] WorldState;
         public Location PlayerLocation;
+        public short GameMoves = 0;
 
         public static GridWorld StandardState()
         {
@@ -87,6 +88,8 @@ namespace GridWorldDemo
 
         public void MovePlayer(int action)
         {
+            GameMoves++;
+
             //# up (row - 1)
             if (action == 0 && PlayerLocation.Y > 0)
             {
@@ -132,21 +135,29 @@ namespace GridWorldDemo
             WorldState[p.X, p.Y, PlayerLayer] = 1;
         }
 
+        public const int LooseScore = -10;
+        public const int WinScore = 10;
+        public const int ProgressScore = -1;
+        public const int MaxMoves = 10;
+
         public int GetReward()
         {
             if (WorldState[PlayerLocation.X, PlayerLocation.Y, PitLayer] == 1)
-                return -10;
+                return LooseScore;
 
             if (WorldState[PlayerLocation.X, PlayerLocation.Y, GoalLayer] == 1)
-                return 10;
+                return WinScore;
 
-            return -1;
+            if (GameMoves >= MaxMoves)
+                return LooseScore;
+
+            return ProgressScore;
         }
 
         public bool GameOver()
         {
             var reward = GetReward();
-            return reward != -1;
+            return GameMoves >= MaxMoves || reward != ProgressScore;
         }
 
         public string DisplayGrid()

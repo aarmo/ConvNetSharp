@@ -1,6 +1,4 @@
-﻿using ConvNetSharp.Serialization;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.IO;
 
 namespace GridWorldDemo
@@ -20,7 +18,7 @@ namespace GridWorldDemo
             Brain brain;
             if (File.Exists(BrainFile))
             {
-                brain = ReadBrainFromFile(BrainFile);
+                brain = Util.ReadBrainFromFile(BrainFile);
 
                 Console.WriteLine("Brain loaded...");
                 Console.WriteLine($"Created: {brain.CreatedDate}. Training Time: {brain.TrainingTime} ({brain.TotalTrainingGames} games)");
@@ -37,10 +35,10 @@ namespace GridWorldDemo
             var initialOutput = brain.DisplayOutput(brain.GetInputs());
 
             //Console.WriteLine("Training...");
-            //brain.Train(500, 1f);
+            //brain.Train(1000, 1f);
 
             Console.WriteLine("Batch Training...");
-            brain.TrainWithExperienceReplay(500, 40, 1f);
+            brain.TrainWithExperienceReplay(3000, 32, 1f, true, BrainFile);
 
             // Sample output:
             brain.World = GridWorld.RandomPlayerState();
@@ -51,7 +49,6 @@ namespace GridWorldDemo
             Console.WriteLine($"Actions: ({_actionNames[0]} {_actionNames[1]} {_actionNames[2]} {_actionNames[3]})");
             Console.WriteLine($"Initial output: {initialOutput}");
             Console.WriteLine($"Sample output: {trainedOutput}");
-            SaveBrainToFile(brain, BrainFile);
 
             Console.WriteLine("\nBrain saved...\nPress enter to play some games...");
             Console.ReadLine();
@@ -65,7 +62,7 @@ namespace GridWorldDemo
                 Console.WriteLine(brain.World.DisplayGrid());
 
                 var moves = 0;
-                while (!brain.World.GameOver() && moves < 10)
+                while (!brain.World.GameOver())
                 {
                     var action = brain.GetNextAction();
                     
@@ -80,28 +77,12 @@ namespace GridWorldDemo
                 }
                 else
                 {
-                    Console.WriteLine($"Game {(brain.World.GetReward() == 10 ? "WON!" : "LOST! :(")}");
+                    Console.WriteLine($"Game {(brain.World.GetReward() == GridWorld.WinScore ? "WON!" : "LOST! :(")}");
                 }
 
                 Console.WriteLine("\nPress enter to play another game...");
                 Console.ReadLine();
             } while (true);
-        }
-
-        private static void SaveBrainToFile(Brain brain, string filename)
-        {
-            brain.NetJson = brain.Net.ToJSON();
-            File.WriteAllText(filename, JsonConvert.SerializeObject(brain));
-        }
-
-        private static Brain ReadBrainFromFile(string filename)
-        {
-            var brain = JsonConvert.DeserializeObject<Brain>(File.ReadAllText(filename));
-            brain.Net = SerializationExtensions.FromJSON(brain.NetJson);
-
-            brain.NetJson = string.Empty;
-
-            return brain;
         }
     }
 }
